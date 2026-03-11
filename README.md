@@ -1,9 +1,13 @@
 ### GiBUU_FSI_Patch_to_NEUT
- !!!step 1:  run download package release using 'download_package.sh'\\
+ step 1:  run download package release using 'download_package.sh'
+ 
  step 2:  follow https://gibuu.hepforge.org/trac/wiki/compiling for compilation
+ 
  step 3 : follow https://gibuu.hepforge.org/trac/wiki/running for running the code
+ 
  step 4:  replace the code/init/initNeutrino.f90 with the version available in this repo.....
            (purpose is to modify initNeutrino.90 so that it can read and initialize NEUT hard scattering events)
+           
  step 5:  go to work dir and find some shell and python scripts.
        
                  A. generate_inputfile.py: it creates a input file corresponding to 'n'th NEUT hard scattering event. The
@@ -28,6 +32,7 @@
                     ./run2.sh
                     (for cleaning information ./clean_output.sh or ./clear.sh)
                     python3 ombine_sorted.py
+
                     
 step 6: After creating jg_FinalEvents.root you can use the *.ipynb to do basic analysis. 
                     
