@@ -20,7 +20,7 @@
                  C. combine_sorted.py : It combines all outputs from all the 'FinalEvents.dat' files created in folder named 1 2 3 ......n 
                  to create a final output root files.
 
-                 Usage: python3 combined_sorted.py
+                 Usage: python3 combine_sorted.py
 
 
                  D. see specific *.sh files useful for submitting batch jobs:
@@ -31,7 +31,7 @@
                     python3 jobcopy.py
                     ./run2.sh
                     (for cleaning information ./clean_output.sh or ./clear.sh)
-                    python3 ombine_sorted.py
+                    python3 combine_sorted.py
 
                     
 step 6: After creating jg_FinalEvents.root you can use the *.ipynb to do basic analysis. 
