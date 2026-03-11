@@ -36,5 +36,5 @@
                     python3 combine_sorted.py
 
                     
-step 6: After creating jg_FinalEvents.root you can use the *.ipynb to do basic analysis. 
+step 6: After creating 'jg_FinalEvents.root' you can use the *.ipynb to do basic analysis. 
                     
