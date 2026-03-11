@@ -10,7 +10,7 @@
            
  step 5 : recompile everything with modified code, the new executable will be located inside the directory named 'testRun'
  
- step 5:  go to work dir and find some shell and python scripts.
+ step 6:  go to work dir and find some shell and python scripts.
        
                  A. generate_inputfile.py: it creates a input file corresponding to 'n'th NEUT hard scattering event. The
                   purpose is to create kinematic info in GiBUU format so that it can be read inside initNeutrino.f90 easily.
