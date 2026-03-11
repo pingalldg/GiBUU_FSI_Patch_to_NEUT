@@ -1,5 +1,5 @@
 ### GiBUU_FSI_Patch_to_NEUT
- step 1:  run download package release using 'download_package.sh'
+ !!!step 1:  run download package release using 'download_package.sh'\\
  step 2:  follow https://gibuu.hepforge.org/trac/wiki/compiling for compilation
  step 3 : follow https://gibuu.hepforge.org/trac/wiki/running for running the code
  step 4:  replace the code/init/initNeutrino.f90 with the version available in this repo.....
