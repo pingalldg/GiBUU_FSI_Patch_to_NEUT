@@ -32,7 +32,7 @@
                     bsub < mkdir_batch.sh
                     python3 jobcopy.py
                     ./run2.sh
-                    (for cleaning information ./clean_output.sh or ./clear.sh)
+                    (for cleaning unneccessary info ./clean_output.sh or ./clear.sh)
                     python3 combine_sorted.py
 
                     
