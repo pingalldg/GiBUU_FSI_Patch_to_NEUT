@@ -1,14 +1,14 @@
 ### GiBUU_FSI_Patch_to_NEUT
- Step 1:  run download package release using 'download_package.sh'
+ Step 1:  run download package release using 'download_package.sh'.
  
- Step 2:  follow https://gibuu.hepforge.org/trac/wiki/compiling for compilation
+ Step 2:  follow https://gibuu.hepforge.org/trac/wiki/compiling for compilation.
  
- Step 3 : follow https://gibuu.hepforge.org/trac/wiki/running for running the code
+ Step 3 : follow https://gibuu.hepforge.org/trac/wiki/running for running the code.
  
  Step 4:  replace the code/init/initNeutrino.f90 with the version available in this repo: gibuu_fsi/.....
-           (purpose is to modify initNeutrino.f90 so that it can read and initialize NEUT hard scattering events)
+           (purpose is to modify initNeutrino.f90 so that it can read and initialize NEUT hard scattering events).
            
- Step 5 : recompile everything with the modified code, the new executable will be located inside the directory named 'testRun'
+ Step 5 : recompile everything with the modified code, the new executable will be located inside the directory named 'testRun'.
  
  Step 6:  Go to the work directory and find some shell and Python scripts.
        
