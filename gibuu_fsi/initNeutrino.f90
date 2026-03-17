@@ -990,11 +990,15 @@ contains
 
     ! set the overall kinematics (most of it as dummy):
     call eNev_SetProcess(eNev0, process_ID,flavor_ID)
+    
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! SOME INFO FOR GIBUU FSI PATCH!!    
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! the following are initialized to assert some default values to real particle external
 !! do not worry about these default values, first we will replace the mom, charge, velocity and pos of these extrenal variables
 !! with the information gathered from  NEUT, and then these info will be accessed later for substitution of these variables (lines :1180,1182,  1338-1359, 1503-1512) 
 !! Following step after initializing GiBUU medium we will pick a nucleon 
-!! which satisfies criteria 1. N^{Ch}_NEUT==N^{ch}_GiBUU, 2. p_NEUT < p_GiBUU (means p_NEUT < P_F) and 3. p^out_N (NEUT) satifies Pauli Blocking
+!! which satisfies criteria 1. N^{Ch}_NEUT==N^{ch}_GiBUU, 2. p_NEUT < p_GiBUU (means p_NEUT < P_F) and 3. p^out_N (NEUT) satifies Pauli Blocking (lines: 1144-1178)
 !! and replace its  mom, charge, velocity and pos with real_extrenal info.
 !! After reading the lepton info We directly replace extrenal_lepton with real
 
