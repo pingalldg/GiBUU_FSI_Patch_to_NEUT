@@ -4,7 +4,7 @@ import uproot
 import awkward as ak
 
 # Root directory of incident folders
-incident_root_dir = "./"  # <-- CHANGE THIS
+incident_root_dir = "./"  
 
 # Lists of arrays per incident
 incident_numbers = []
