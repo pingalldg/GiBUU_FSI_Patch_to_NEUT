@@ -3,7 +3,7 @@ import numpy as np
 import sys
 
 
-file=uproot.open("/gpfs/group/t2k/beam/work/pingaldg/backup_release3/release/output_wpotential_wcoll_offshell_ccqe_plus_deltas/jg_test_NIWG_dnn2.root")
+file=uproot.open("path_to_the_input/jg_test_NIWG_dnn.root")
 
 tree = file['NIWGTree']
 
