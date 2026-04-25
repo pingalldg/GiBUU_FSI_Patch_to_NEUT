@@ -17,7 +17,6 @@ isatPV=tree[ 'NIWGEvent/part_stack/part_stack.isAtPrimaryVertex'].array() ## par
 mode_array = tree['NIWGEvent/neutmode'].array()
 
 
-# Split momentum and energy
 fE = p_array['fE']
 fPx = p_array['fP']['fX']
 fPy = p_array['fP']['fY']
@@ -127,7 +126,7 @@ def generate_fortran_assignment(j):
         pB = lorentz_boost(betacm, external_lepton_in)
         pB[1:4] = rotateZY(theta, phi, pB[1:4])
         phiLepton = np.arctan2(pB[2], pB[1])
-        if ((mode_array[j]==12)& (mode_array[j]==13)):
+        if ((mode_array[j]==12)| (mode_array[j]==13)):
             lines = [
                 f"{realparticle_external[0]} {realparticle_external[1]} {realparticle_external[2]} {realparticle_external[3]}",
                 f"{realparticle_vel[0]} {realparticle_vel[1]} {realparticle_vel[2]}",
