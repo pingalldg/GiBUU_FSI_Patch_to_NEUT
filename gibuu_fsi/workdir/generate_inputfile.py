@@ -1,11 +1,15 @@
 import uproot
 import numpy as np
 import sys
+import os
 
+#file=uproot.open("/home/t2k/pingaldg/neut/NIWG_ehouarn.root")
+ROOT_FILE= os.environ.get("INPUTROOT","/gpfs/group/t2k/beam/work/pingaldg/backup_release3/release/output_wpotential_wcoll_offshell_ccqe_plus_res_ehouarn/NIWG_ehouarn_inclusive5.root")
+print(f"Loading {ROOT_FILE} ...", flush=True)
 
-file=uproot.open("path_to_the_input/jg_test_NIWG_dnn.root")
+_file = uproot.open(ROOT_FILE)
 
-tree = file['NIWGTree']
+tree = _file['NIWGTree']
 
 nu_index = tree['NIWGEvent/nu_index'].array()
 isnuc_index = tree['NIWGEvent/isnuc_index'].array()
@@ -17,6 +21,7 @@ isatPV=tree[ 'NIWGEvent/part_stack/part_stack.isAtPrimaryVertex'].array() ## par
 mode_array = tree['NIWGEvent/neutmode'].array()
 
 
+# Split momentum and energy
 fE = p_array['fE']
 fPx = p_array['fP']['fX']
 fPy = p_array['fP']['fY']
@@ -24,6 +29,45 @@ fPz = p_array['fP']['fZ']
 
 mN = 0.938  # Nucleon mass
 
+def neut_to_gibuu_pdg(case):
+      if case== 11:   return np.array((901,-1, 0.000511));      ## e-
+      if case== 12:   return np.array((911,0, 0.0 ))        ## nu_e
+      if case== 13:   return np.array((902,-1, 0.1056));    ## mu-
+      if case== 14:   return np.array((912,0, 0.0));        ## nu_mu
+      if case== 15:   return np.array((903,-1,1.7769));    ## tau-
+      if case== 16:   return np.array((913,0, 0.0));        ## nu_tau
+      ## Mesons
+      if case== 211:   return np.array((101,1, 0.138));   ## pi+
+      if case== -211:   return np.array((101,-1, 0.138));   ## pi+
+      if case== 111:   return np.array((101,0, 0.135));   ## pi0
+      if case== 221:   return np.array((102,0, 0.5478 ));     ## eta
+      if case== 331:   return np.array((106,0, 0.9578));    ## eta'
+      if case== 213:   return np.array((103,1, 0.7755));     ## rho+
+      if case== -213:   return np.array((103,-1, 0.7755));     ## rho+
+      if case== 113:   return np.array((103,0, 0.7755));     ## rho0
+      if case== 223:   return np.array((105,0, 0.7826));     ## omega
+      # if case== 20113: return np.array();    ## a1
+      # if case== 20213: return np.array();    ## a1
+      if case== 321:   return np.array((110,1, 0.4960 ));   ## K+
+      if case== -321:   return np.array((111,-1, 0.4960));   ## K+
+      if case== 311:   return np.array((110,0, 0.4960));   ## K0
+      if case== -311:   return np.array((111,0, 0.4960));   ## K0
+      if case== 310:   return np.array((111,0, 0.4960));   ## K0S
+      if case== 130:   return np.array((110,0, 0.4960));   ## K0L
+      if case== 323:   return np.array((112,0, 0.8920));     ## K*+
+      if case== -323:   return np.array((112,0, 0.8920));     ## K*+
+      if case== 313:   return np.array((113,0, 0.8920));     
+      if case== -313:   return np.array((113,0, 0.8920));     ## K*0
+      ## Baryons
+      if case== 2212: return np.array((1,1, 0.938));    ## proton
+      if case== -2212: return np.array((1,0, 0.938));    ## proton
+
+      if case== 2112: return np.array((1,0, 0.938));    ## neutron
+      if case== -2112: return np.array((1,0, 0.938));    ## neutron
+
+      if case== 3122: return np.array((32,0, 1.116));    ## lambda
+      if case== -3122: return np.array((32,0, 1.116));    ## lambda
+      else: return np.array((0,0,0))
 
 
 def moma(idx, j):
@@ -89,15 +133,12 @@ def generate_fortran_assignment(j):
     nuc_idx = isnuc_index[j]
     lep_idx = fslep_index[j]
     isatPV_idx=isatPV[j]
-    if np.sum(isatPV_idx)==5:
+    if ((np.sum(isatPV_idx)==5) & ((mode_array[j]==11)| (mode_array[j]==12)| (mode_array[j]==13))):
         realparticle_external = moma(nuc_idx, j)
         realparticle_vel = realparticle_external[1:4] / realparticle_external[0]
-
-
         realparticle_external1 =  np.array([0., 0., 0., 0.])
         realparticle_vel1 =  np.array([0., 0., 0.])
-        
-
+    
         finalstate_external1 = moma(nuc_idx + 2, j)
         finalstate_external2= moma(nuc_idx+3,j)
 
@@ -132,8 +173,6 @@ def generate_fortran_assignment(j):
                 f"{realparticle_vel[0]} {realparticle_vel[1]} {realparticle_vel[2]}",
                 f"{realparticle_external1[0]} {realparticle_external1[1]} {realparticle_external1[2]} {realparticle_external1[3]}",
                 f"{realparticle_vel1[0]} {realparticle_vel1[1]} {realparticle_vel1[2]}",                
-                f"{finalstate_external1[0]} {finalstate_external1[1]} {finalstate_external1[2]} {finalstate_external1[3]}",
-                f"{finalstate_external2[0]} {finalstate_external2[1]} {finalstate_external2[2]} {finalstate_external2[3]}",
                 f"{external_lepton_in[0]} {external_lepton_in[1]} {external_lepton_in[2]} {external_lepton_in[3]}",
                 f"{external_lepton_out[0]} {external_lepton_out[1]} {external_lepton_out[2]} {external_lepton_out[3]}",
                 f"{boson[0]} {boson[1]} {boson[2]} {boson[3]}",
@@ -144,8 +183,11 @@ def generate_fortran_assignment(j):
                 f"{pcm[0]} {pcm[1]} {pcm[2]} {pcm[3]}",
                 f"{betacm[0]} {betacm[1]} {betacm[2]}",
                 f"{phiLepton}",
+                f"{2}",
+                f"{finalstate_external1[0]} {finalstate_external1[1]} {finalstate_external1[2]} {finalstate_external1[3]}",
+                f"{finalstate_external2[0]} {finalstate_external2[1]} {finalstate_external2[2]} {finalstate_external2[3]}",                
                 f"{1} {0} {0} {0} {0} {0} {2} {1}",  # static line
-                f"{2}"
+                f"{0.938} {0.938} {1.232}"
             ]
             
         elif(mode_array[j]==11):
@@ -154,8 +196,6 @@ def generate_fortran_assignment(j):
                 f"{realparticle_vel[0]} {realparticle_vel[1]} {realparticle_vel[2]}",
                 f"{realparticle_external1[0]} {realparticle_external1[1]} {realparticle_external1[2]} {realparticle_external1[3]}",
                 f"{realparticle_vel1[0]} {realparticle_vel1[1]} {realparticle_vel1[2]}",                      
-                f"{finalstate_external1[0]} {finalstate_external1[1]} {finalstate_external1[2]} {finalstate_external1[3]}",
-                f"{finalstate_external2[0]} {finalstate_external2[1]} {finalstate_external2[2]} {finalstate_external2[3]}",
                 f"{external_lepton_in[0]} {external_lepton_in[1]} {external_lepton_in[2]} {external_lepton_in[3]}",
                 f"{external_lepton_out[0]} {external_lepton_out[1]} {external_lepton_out[2]} {external_lepton_out[3]}",
                 f"{boson[0]} {boson[1]} {boson[2]} {boson[3]}",
@@ -166,11 +206,15 @@ def generate_fortran_assignment(j):
                 f"{pcm[0]} {pcm[1]} {pcm[2]} {pcm[3]}",
                 f"{betacm[0]} {betacm[1]} {betacm[2]}",
                 f"{phiLepton}",
+                f"{2}", 
+                f"{finalstate_external1[0]} {finalstate_external1[1]} {finalstate_external1[2]} {finalstate_external1[3]}",
+                f"{finalstate_external2[0]} {finalstate_external2[1]} {finalstate_external2[2]} {finalstate_external2[3]}",                
                 f"{1} {1} {0} {0} {0} {0} {2} {2}",
-                f"{2}"  
+                f"{0.938} {0.938} {1.232}"
+
             ]
         return '\n'.join(lines)
-    elif (np.sum(isatPV_idx)==4):
+    elif ((np.sum(isatPV_idx)==4) & (mode_array[j]==1)):
         realparticle_external = moma(nuc_idx, j)
         realparticle_vel = realparticle_external[1:4] / realparticle_external[0]
         realparticle_external1 =  np.array([0., 0., 0., 0.])
@@ -207,8 +251,6 @@ def generate_fortran_assignment(j):
             f"{realparticle_vel[0]} {realparticle_vel[1]} {realparticle_vel[2]}",
             f"{realparticle_external1[0]} {realparticle_external1[1]} {realparticle_external1[2]} {realparticle_external1[3]}",
             f"{realparticle_vel1[0]} {realparticle_vel1[1]} {realparticle_vel1[2]}",                  
-            f"{finalstate_external1[0]} {finalstate_external1[1]} {finalstate_external1[2]} {finalstate_external1[3]}",
-            f"{finalstate_external2[0]} {finalstate_external2[1]} {finalstate_external2[2]} {finalstate_external2[3]}",
             f"{external_lepton_in[0]} {external_lepton_in[1]} {external_lepton_in[2]} {external_lepton_in[3]}",
             f"{external_lepton_out[0]} {external_lepton_out[1]} {external_lepton_out[2]} {external_lepton_out[3]}",
             f"{boson[0]} {boson[1]} {boson[2]} {boson[3]}",
@@ -219,12 +261,16 @@ def generate_fortran_assignment(j):
             f"{pcm[0]} {pcm[1]} {pcm[2]} {pcm[3]}",
             f"{betacm[0]} {betacm[1]} {betacm[2]}",
             f"{phiLepton}",
+            f"{1}",
+            f"{finalstate_external1[0]} {finalstate_external1[1]} {finalstate_external1[2]} {finalstate_external1[3]}",
+            f"{finalstate_external2[0]} {finalstate_external2[1]} {finalstate_external2[2]} {finalstate_external2[3]}",            
             f"{1} {0} {0} {0} {1} {0} {1} {1}",  # static line
-            f"{1}"
+            f"{0.938} {0.938} {0.938}"
+
         ]
         return '\n'.join(lines)
     
-    elif(np.sum(isatPV_idx)==6):
+    elif((np.sum(isatPV_idx)==6) & (mode_array[j]==2)):
 
         realparticle_external = moma(nuc_idx, j)
         realparticle_vel = realparticle_external[1:4] / realparticle_external[0]
@@ -281,8 +327,6 @@ def generate_fortran_assignment(j):
             f"{realparticle_vel[0]} {realparticle_vel[1]} {realparticle_vel[2]}",
             f"{realparticle_external1[0]} {realparticle_external1[1]} {realparticle_external1[2]} {realparticle_external1[3]}",
             f"{realparticle_vel1[0]} {realparticle_vel1[1]} {realparticle_vel1[2]}",                       
-            f"{finalstate_external1[0]} {finalstate_external1[1]} {finalstate_external1[2]} {finalstate_external1[3]}",
-            f"{finalstate_external2[0]} {finalstate_external2[1]} {finalstate_external2[2]} {finalstate_external2[3]}",
             f"{external_lepton_in[0]} {external_lepton_in[1]} {external_lepton_in[2]} {external_lepton_in[3]}",
             f"{external_lepton_out[0]} {external_lepton_out[1]} {external_lepton_out[2]} {external_lepton_out[3]}",
             f"{boson[0]} {boson[1]} {boson[2]} {boson[3]}",
@@ -293,9 +337,80 @@ def generate_fortran_assignment(j):
             f"{pcm[0]} {pcm[1]} {pcm[2]} {pcm[3]}",
             f"{betacm[0]} {betacm[1]} {betacm[2]}",
             f"{phiLepton}",
-            f"{1} {0} {1} {charge_pdg+charge_pdg1-1} {1} {charge_pdg} {1} {charge_pdg1}",  # static line
-            f"{35}"
+            f"{35}",     
+            f"{finalstate_external1[0]} {finalstate_external1[1]} {finalstate_external1[2]} {finalstate_external1[3]}",
+            f"{finalstate_external2[0]} {finalstate_external2[1]} {finalstate_external2[2]} {finalstate_external2[3]}",                   
+            f"{1} {0} {1} {charge_pdg+charge_pdg1-1} {1} {charge_pdg} {1} {charge_pdg1}",
+            f"{0.938} {0.938} {0.938} {0.938}"
+  # static line
         ]
+        return '\n'.join(lines)
+    
+    elif (mode_array[j]==26):
+        realparticle_external = moma(nuc_idx, j)
+        realparticle_vel = realparticle_external[1:4] / realparticle_external[0]
+        realparticle_external1 =  np.array([0., 0., 0., 0.])
+        realparticle_vel1 =  np.array([0., 0., 0.])
+        external_lepton_in = moma(nu_idx, j)
+        external_lepton_out = moma(lep_idx, j)
+        boson = external_lepton_in - external_lepton_out
+        Q2 = Q2_array[j]
+
+        def invariant_mass(vec1, vec2, vec3):
+            total = vec1 - vec2 + vec3
+            return np.sqrt(total[0]*total[0]-total[1]*total[1]-total[2]*total[2]-total[3]*total[3])
+
+        W = invariant_mass(moma(nu_idx, j), moma(lep_idx, j), moma(nuc_idx, j))
+        W_free = W
+        W_rec = mN**2 + 2.*mN*(external_lepton_in[0] - external_lepton_out[0]) - Q2
+
+        betacm = beta(moma(nuc_idx, j), boson)
+        pcm = -lorentz_boost(betacm, realparticle_external)
+
+        phi = np.arctan2(pcm[2], pcm[1])
+        theta = np.arctan2(np.sqrt(pcm[1]**2 + pcm[2]**2), pcm[3])
+
+        pB = lorentz_boost(betacm, external_lepton_in)
+        pB[1:4] = rotateZY(theta, phi, pB[1:4])
+        phiLepton = np.arctan2(pB[2], pB[1])
+
+        for i in range(len(isatPV[j][isatPV[j]==1])-3):
+            globals()["finalstate_external"+str(i)]=moma(nuc_idx + 2 + i,j)
+            print(globals()["finalstate_external"+str(i)])
+        lines = [
+            f"{realparticle_external[0]} {realparticle_external[1]} {realparticle_external[2]} {realparticle_external[3]}",
+            f"{realparticle_vel[0]} {realparticle_vel[1]} {realparticle_vel[2]}",
+            f"{realparticle_external1[0]} {realparticle_external1[1]} {realparticle_external1[2]} {realparticle_external1[3]}",
+            f"{realparticle_vel1[0]} {realparticle_vel1[1]} {realparticle_vel1[2]}",                             
+            f"{external_lepton_in[0]} {external_lepton_in[1]} {external_lepton_in[2]} {external_lepton_in[3]}",
+            f"{external_lepton_out[0]} {external_lepton_out[1]} {external_lepton_out[2]} {external_lepton_out[3]}",
+            f"{boson[0]} {boson[1]} {boson[2]} {boson[3]}",
+            f"{Q2}",
+            f"{W}",
+            f"{W_free}",
+            f"{W_rec}",
+            f"{pcm[0]} {pcm[1]} {pcm[2]} {pcm[3]}",
+            f"{betacm[0]} {betacm[1]} {betacm[2]}",
+            f"{phiLepton}",
+            f"{34}",
+            f"{len(isatPV[j][isatPV[j]==1])-3}",
+        ]
+        print(lines)
+        pdgchargemass=neut_to_gibuu_pdg(pdg_array[j,nuc_idx])
+
+        lines.append(f"{int(pdgchargemass[0])} {int(pdgchargemass[1])}")
+        lines.append(f"{pdgchargemass[2]}")
+ 
+        for i in range(len(isatPV[j][isatPV[j]==1])-3):
+            ee=globals()["finalstate_external"+str(i)][0]
+            ppx=globals()["finalstate_external"+str(i)][1]
+            ppy=globals()["finalstate_external"+str(i)][2]
+            ppz=globals()["finalstate_external"+str(i)][3]
+            lines.append(f" {ee} {ppx} {ppy} {ppz}")
+        print(lines)
+        for i in range(len(isatPV[j][isatPV[j]==1])-3):
+            pdgchargemass=neut_to_gibuu_pdg(pdg_array[j,nuc_idx + 2 + i])
+            lines.append(f"{int(pdgchargemass[0])} {int(pdgchargemass[1])} {pdgchargemass[2]}")
         return '\n'.join(lines)
 
 def write_fortran_include(j, filename="input_values.f90"):
@@ -303,8 +418,9 @@ def write_fortran_include(j, filename="input_values.f90"):
     with open(filename, "w") as f:
         f.write(fortran_code)
 
+
+
 # Usage
 if __name__ == "__main__":
     i = int(sys.argv[1])
-    write_fortran_include(i, filename=f"input_values{i}.f90")
-        
+    write_fortran_include(i, filename=f"input_values{i}.f90")        
