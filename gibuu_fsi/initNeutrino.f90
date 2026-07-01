@@ -849,6 +849,7 @@ contains
     use monteCarlo, only: MonteCarloChoose
     use constants, only: mN
     use residue, only: InitResidue, ResidueAddPH, ResidueSetWeight
+    use energyCalc, only: updateEnergies
 
     type(particle), dimension(:,:),intent(inOut) :: realParticles
     type(particle), dimension(:,:),intent(inOut) :: pertParticles
@@ -858,7 +859,7 @@ contains
 
     logical :: raiseFlag
 
-    integer :: numtry=0
+    integer :: numtry=0, dis_pauli_counter1,dis_pauli_counter2
     integer,dimension(1:max_finalstate_ID)       :: numberofsuccess=0
     integer,dimension(1:max_finalstate_ID), save :: numberofsuccessfinal=0
     real :: sigtot!,sig
@@ -866,11 +867,14 @@ contains
 
     type(particle),dimension(1:max_finalstate_ID,1:2),target :: OutPart, finalstate_external
     type(particle),dimension(1:20),target :: OutPartDIS
+    real,dimension(1:20,0:3):: finalstate_external_dis !! addded by pingal
+    real,dimension(1:20)::mass_dis !! added by pingal
+    integer,dimension (1:20,1:2) :: finalstate_external_dis_ch_ID !! addded by pingal
     type(particle),dimension(1:3), target :: OutPart2pi
     type(particle),dimension(:), pointer :: pOutPart
-    type(particle),dimension(:), allocatable :: finalstate !! added by pingal
+    type(particle),dimension(:), allocatable :: finalstate 
     type(particle),dimension(2):: finalstate_external_pauli !! added by pingal
-    type(particle) :: test_for_pauli(size(realParticles,dim=1),size(realParticles,dim=2)) !! added by pingal
+    type(particle) :: test_for_pauli(size(realParticles,dim=1),size(realParticles,dim=2)),finalstate_test(size(realParticles,dim=1),20) !! added by pingal
     type(particle):: realparticle_external,realparticle_external1,external_lepton_in, external_lepton_out,external_boson,external_nucleon, external_nucleon_free !!added by pingal
     real :: external_Q2,external_W,external_W_free, external_W_rec,external_phiLepton !! added by pingal
     integer:: external_idProcess, external_idfamily,k_external !! added by pingal
@@ -900,7 +904,7 @@ contains
     integer :: number
     logical :: NumbersAlreadySet
     logical,save :: MCmode
-
+    integer :: num_dis,iii !! added by pingal 
     type(histogram), save :: hSigmaMC_qz(0:max_Hist)
     type(histogram), save :: hSigmaMC_nu(0:max_Hist)
     type(histogram), save :: hSigmaMC_Q2(0:max_Hist)
@@ -1138,8 +1142,6 @@ contains
    read(15,*) realparticle_external%vel
    read(15,*) realparticle_external1%mom
    read(15,*) realparticle_external1%vel   
-   read(15,*) finalstate_external(1,1)%mom
-   read(15,*) finalstate_external(1,2)%mom
    read(15,*) external_lepton_in%mom
    read(15,*) external_lepton_out%mom
    read(15,*) external_boson%mom
@@ -1150,18 +1152,40 @@ contains
    read(15,*) external_pcm
    read(15,*) external_betacm
    read(15,*) external_phiLepton
-   read(15,*) realparticle_external%ID, realparticle_external%charge, realparticle_external1%ID, realparticle_external1%charge, finalstate_external(1,2)%ID, finalstate_external(1,2)%charge, finalstate_external(1,1)%ID, finalstate_external(1,1)%charge 
    read(15,*) k_external
+   if ((k_external .eq. 1).or.(k_external.eq.2)) then
+      read(15,*) finalstate_external(1,1)%mom
+      read(15,*) finalstate_external(1,2)%mom
+      read(15,*) realparticle_external%ID, realparticle_external%charge, realparticle_external1%ID, realparticle_external1%charge, finalstate_external(1,2)%ID, finalstate_external(1,2)%charge, finalstate_external(1,1)%ID, finalstate_external(1,1)%charge 
+      read(15,*) realparticle_external%mass,  realparticle_external1%mass,  finalstate_external(1,1)%mass
+
+   elseif ( k_external.eq.35 ) then
+      read(15,*) finalstate_external(1,1)%mom
+      read(15,*) finalstate_external(1,2)%mom
+      read(15,*) realparticle_external%ID, realparticle_external%charge, realparticle_external1%ID, realparticle_external1%charge, finalstate_external(1,2)%ID, finalstate_external(1,2)%charge, finalstate_external(1,1)%ID, finalstate_external(1,1)%charge 
+      read(15,*) realparticle_external%mass,  realparticle_external1%mass, finalstate_external(1,2)%mass,  finalstate_external(1,1)%mass
+   elseif(k_external.eq.34)  then   
+      read(15,*) num_dis
+      read(15,*) realparticle_external%ID, realparticle_external%charge
+      read(15,*) realparticle_external%mass
+      do i=1,num_dis
+      read(15,*)finalstate_external_dis(i,0),finalstate_external_dis(i,1),finalstate_external_dis(i,2),finalstate_external_dis(i,3)
+      end do
+      do i = 1, num_dis
+      read(15,*)finalstate_external_dis_ch_ID(i, 0), finalstate_external_dis_ch_ID(i, 1), mass_dis(i) !! addded by pingal
+      write(10,*)"finalstate_external_dis_ch_ID(i, 0), finalstate_external_dis_ch_ID(i, 1), mass_dis(i)",finalstate_external_dis_ch_ID(i, 0), finalstate_external_dis_ch_ID(i, 1), mass_dis(i) !! addded by pingal
+      end do 
+   end if
    close(15)
    external_nucleon=realparticle_external
    external_nucleon_free=realparticle_external
-   write(*,*)finalstate_external(1,1)%mom,"finalstate_extrenal"
-   write(*,*)finalstate_external(1,2)%mom,"finalstate_extrenal"
+   ! write(*,*)finalstate_external(1,1)%mom,"finalstate_extrenal"
+   ! write(*,*)finalstate_external(1,2)%mom,"finalstate_extrenal"
    write(*,*)realparticle_external%mom,"realparticle_external"
    write(*,*)external_lepton_in%mom,"external_lepton_in"
    write(*,*)external_lepton_out%mom,"external_lepton_out"
    write(*,*)path_To_External
-   write(*,*) realparticle_external%ID, realparticle_external%charge, finalstate_external(1,1)%ID, finalstate_external(1,1)%charge, finalstate_external(1,2)%ID, finalstate_external(1,2)%charge 
+   ! write(*,*) realparticle_external%ID, realparticle_external%charge, finalstate_external(1,1)%ID, finalstate_external(1,1)%charge, finalstate_external(1,2)%ID, finalstate_external(1,2)%charge 
    ! stop
    ! write(*,*)"raiseFlagIn", raiseFlagIn
    ! stop
@@ -1192,7 +1216,11 @@ contains
             finalstate_external_pauli(1)%pos= realParticles(i,j)%pos     
             finalstate_external_pauli(2)%pos= realParticles(i,j)%pos    
             finalstate_external_pauli(1)%charge= finalstate_external(1,1)%charge     
-            finalstate_external_pauli(2)%charge= finalstate_external(1,2)%charge            
+            finalstate_external_pauli(2)%charge= finalstate_external(1,2)%charge       
+            finalstate_external_pauli(1)%ID= finalstate_external(1,1)%ID     
+            finalstate_external_pauli(2)%ID= 0   !! this should be set as 0 other wise the pauli blocking would fail 
+            finalstate_external_pauli(1)%mass= finalstate_external(1,1)%mass     
+            finalstate_external_pauli(2)%mass= finalstate_external(1,2)%mass                           
             if (checkPauli(finalstate_external_pauli,test_for_pauli)) then 
               whichReal_nucleon=j  
               cycle loopnucleon2
@@ -1201,7 +1229,7 @@ contains
             end if   
          end if 
       end do  loopnucleon2  
-      else if (k_external.eq.2) then
+      else if ((k_external.eq.2)) then
       whichReal_nucleon=0
       loopnucleon3: do j = lbound(realParticles,dim=2),ubound(realParticles,dim=2)
          write(*,*) whichReal_nucleon, realParticles(i,j)%mom(1:3)
@@ -1238,7 +1266,11 @@ contains
             finalstate_external_pauli(1)%pos= realParticles(i,j)%pos     
             finalstate_external_pauli(2)%pos= realParticles(i,j)%pos    
             finalstate_external_pauli(1)%charge= finalstate_external(1,1)%charge     
-            finalstate_external_pauli(2)%charge= finalstate_external(1,2)%charge            
+            finalstate_external_pauli(2)%charge= finalstate_external(1,2)%charge   
+            finalstate_external_pauli(1)%ID= finalstate_external(1,1)%ID    
+            finalstate_external_pauli(2)%ID= finalstate_external(1,2)%ID  
+            finalstate_external_pauli(1)%mass= finalstate_external(1,1)%mass     
+            finalstate_external_pauli(2)%mass= finalstate_external(1,2)%mass                                  
             if (checkPauli(finalstate_external_pauli,test_for_pauli)) then 
               whichReal_nucleon=j  
               cycle loopnucleon4
@@ -1248,6 +1280,51 @@ contains
          end if 
       end do  loopnucleon4  
 
+       else if (k_external.eq.34) then
+      whichReal_nucleon=0
+      loopnucleon5: do j = lbound(realParticles,dim=2),ubound(realParticles,dim=2)
+         write(*,*) whichReal_nucleon, realParticles(i,j)%mom(1:3)           
+          if ((realParticles(i,j)%charge==realparticle_external%charge).and. &
+            (dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3)).gt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))))then
+            dis_pauli_counter1=0
+            dis_pauli_counter2=0
+            test_for_pauli=realParticles
+            test_for_pauli(i,j)%mom=realparticle_external%mom  
+            test_for_pauli(i,j)%charge=realparticle_external%charge
+            do iii=1,num_dis
+             if (finalstate_external_dis_ch_ID(iii, 0).eq.1) then
+               dis_pauli_counter1=dis_pauli_counter1+1
+               finalstate_external_pauli(1)%mom= finalstate_external_dis(iii,:)
+               finalstate_external_pauli(1)%pos= realParticles(i,j)%pos     
+               finalstate_external_pauli(1)%charge= finalstate_external_dis_ch_ID(iii, 1)     
+               finalstate_external_pauli(1)%ID= finalstate_external_dis_ch_ID(iii, 0)    
+               finalstate_external_pauli(1)%mass= mass_dis(iii)  
+               finalstate_external_pauli(2)%mom= (/0.,0.,0.,0./)
+               finalstate_external_pauli(2)%pos= realParticles(i,j)%pos     
+               finalstate_external_pauli(2)%charge= 0.0     
+               finalstate_external_pauli(2)%ID= 0    
+               finalstate_external_pauli(2)%mass= 0.0               
+               if (checkPauli(finalstate_external_pauli,test_for_pauli)) then 
+                  ! whichReal_nucleon=j 
+                  dis_pauli_counter2=dis_pauli_counter2+1 !! some condition to ensure all FS obey pauli blocking
+                  ! cycle loopnucleon5
+                  else
+                  dis_pauli_counter2=dis_pauli_counter2-1 !! some condition to ensure all FS obey pauli blocking
+
+               end if   
+             end if
+            end do
+            !!#############################
+           if (dis_pauli_counter1.eq.dis_pauli_counter2)then
+                whichReal_nucleon=j 
+               cycle loopnucleon5
+            else
+            write(*,*)"Pauli Blocking failed"
+           end if
+            !!#############################
+
+         end if 
+      end do  loopnucleon5 
       end if 
           write(*,*) whichReal_nucleon, realparticle_external%mom(1:3),realParticles(i,whichReal_nucleon)%mom(1:3)
          ! stop
@@ -1459,6 +1536,10 @@ contains
             ! end if
             !  sigma(k)=1.00E-003 !! added by Pingal
             ! fak1=0.00000000000 !! added by Pingal
+            if (k_external.eq.35)then
+            sigma(k)=0.001 !! just to forcefully assign some sigma not needed
+            end if
+
             eNev(k)%lepton_in%mom=external_lepton_in%mom
             eNev(k)%lepton_in%vel=external_lepton_in%mom(1:3)/external_lepton_in%mom(0)
             eNev(k)%lepton_in%charge=external_lepton_in%charge
@@ -1472,6 +1553,9 @@ contains
             eNeV(k)%nucleon_free=realParticles(i,j)
             eNeV(k)%nucleon2%mom=realparticle_external1%mom
             eNeV(k)%nucleon2%vel=realparticle_external1%vel
+            eNeV(k)%nucleon2%ID=realparticle_external1%ID
+            eNeV(k)%nucleon2%charge=realparticle_external1%charge
+            eNeV(k)%nucleon2%mass=realparticle_external1%mass
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             eNeV(k)%boson=external_boson
             eNeV(k)%Q2=external_Q2
@@ -1558,7 +1642,7 @@ contains
                    call TRACEBACK("You have to increase 'equalWeights_Max'.")
                 end if
 
-                if (totalWeight < rn()*equalWeights_Max) cycle ! event rejected
+               !  if (totalWeight < rn()*equalWeights_Max) cycle ! event rejected
 
                 sigma(1:) = sigma(1:)*equalWeights_Max/abs(totalWeight) ! --> statistics
                 totalWeight = sign(equalWeights_Max, totalWeight)   ! --> perweight
@@ -1592,18 +1676,18 @@ contains
             write(10,*)"OutPart(k,:)%mom",OutPart(2,:)
             write(10,*)"*********************************"
             write(10,*)"OutPart(k,:)%pos",OutPart(2,:)
-            write(10,*)"**********************************"
-            write(10,*)"finalstate(0)%mom",finalstate(1)%mom
-            write(10,*)"*********************************"
-            write(10,*)"finalstate(1)%mom",finalstate(2)%mom
-            write(10,*)"*********************************"
-            write(10,*)"finalstate(0)%ID",finalstate(1)%ID
-            write(10,*)"*********************************"
-            write(10,*)"finalstate(1)%ID",finalstate(2)%ID
-            write(10,*)"*********************************"
-            write(10,*)"finalstate(0)%charge",finalstate(1)%charge
-            write(10,*)"*********************************"
-            write(10,*)"finalstate(1)%charge",finalstate(2)%charge
+            ! write(10,*)"**********************************"
+            ! write(10,*)"finalstate(0)%mom",finalstate(1)%mom
+            ! write(10,*)"*********************************"
+            ! write(10,*)"finalstate(1)%mom",finalstate(2)%mom
+            ! write(10,*)"*********************************"
+            ! write(10,*)"finalstate(0)%ID",finalstate(1)%ID
+            ! write(10,*)"*********************************"
+            ! write(10,*)"finalstate(1)%ID",finalstate(2)%ID
+            ! write(10,*)"*********************************"
+            ! write(10,*)"finalstate(0)%charge",finalstate(1)%charge
+            ! write(10,*)"*********************************"
+            ! write(10,*)"finalstate(1)%charge",finalstate(2)%charge
             write(10,*)"*********************************"
             write(10,*)"eNev(k)%lepton_in%mom",eNev(2)%lepton_in%mom
             write(10,*)"**********************************"
@@ -1622,17 +1706,32 @@ contains
             write(10,*)eNev(2)%pcm, "eNev(k)%pcm"
             write(10,*)"**********************************"
             write(10,*)eNev(2)%betacm, "eNev(k)%betacm"   
+            ! write(10,*)"**********************************"
+            ! write(10,*)"finalstate(1)%", finalstate(1)
+            ! write(10,*)"**********************************"
+            ! write(10,*)"**********************************"
+            ! write(10,*)"finalstate(2)%", finalstate(2)
             write(10,*)"**********************************"
+
+            if (k_external.ne.34) then 
+            ! write(*,*)realParticles, "realparticle"   
+                                 ! write(10,*)"**********************************"
+            write(10,*)"**********************************"
+            write(10,*)"finalstate(0)%mom",finalstate(1)%mom
+            write(10,*)"*********************************"
+            write(10,*)"finalstate(1)%mom",finalstate(2)%mom
+            write(10,*)"*********************************"
+            write(10,*)"finalstate(0)%ID",finalstate(1)%ID
+            write(10,*)"*********************************"
+            write(10,*)"finalstate(1)%ID",finalstate(2)%ID
+            write(10,*)"*********************************"
+            write(10,*)"finalstate(0)%charge",finalstate(1)%charge
+            write(10,*)"*********************************"
+            write(10,*)"finalstate(1)%charge",finalstate(2)%charge                                 
             write(10,*)"finalstate(1)%", finalstate(1)
             write(10,*)"**********************************"
             write(10,*)"**********************************"
-            write(10,*)"finalstate(2)%", finalstate(2)
-            write(10,*)"**********************************"
-           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-            
-            ! write(*,*)realParticles, "realparticle"   
-                                
+            write(10,*)"finalstate(2)%", finalstate(2)           
             ! write(10,*)size(pOutPart), "size(pOutPart)", sigma(k), fak1
 
               finalstate(1)%mom=finalstate_external(1,1)%mom
@@ -1640,6 +1739,7 @@ contains
               finalstate(1)%ID=finalstate_external(1,1)%ID
               finalstate(1)%charge=finalstate_external(1,1)%charge
               finalstate(1)%pos=realParticles(i,j)%pos
+              finalstate(1)%mass=finalstate_external(1,1)%mass
 
 
             ! finalstate(1)%charge =finalstate_external(1,1)%charge
@@ -1650,29 +1750,47 @@ contains
             finalstate(2)%charge=finalstate_external(1,2)%charge
             finalstate(2)%ID=finalstate_external(1,2)%ID
             finalstate(2)%pos=realParticles(i,j)%pos
+            finalstate(2)%mass=finalstate_external(1,2)%mass
 
             if (k_external.eq.35)then
                   finalstate(2)%vel=finalstate(2)%mom(1:3)/finalstate(2)%mom(0)
-                  if (finalstate(2)%charge.eq.1)then
-                      finalstate(2)%mass=0.938
-                      else
-                      finalstate(2)%mass=0.939
-                  end if   
-                  if (finalstate(1)%charge.eq.1)then
-                      finalstate(1)%mass=0.938
-                      else
-                      finalstate(1)%mass=0.939
-                  end if
+                  ! if (finalstate(2)%charge.eq.1)then
+                  !     finalstate(2)%mass=0.938
+                  !     else
+                  !     finalstate(2)%mass=0.938
+                  ! end if   
+                  ! if (finalstate(1)%charge.eq.1)then
+                  !     finalstate(1)%mass=0.938
+                  !     else
+                  !     finalstate(1)%mass=0.938
+                  ! end if
             else if (k_external.eq.1)  then 
                       finalstate(1)%mass=0.938
                       finalstate(2)%mass=0.0         
 
             else if (k_external.eq.2)   then
-                     finalstate(1)%mass=external_W        
+                     finalstate(1)%mass= finalstate_external(1,1)%mass!!!external_W        
                      finalstate(2)%mass=0.0         
             end if       
+         else
+         do iii=1,num_dis
+         finalstate(iii)%mom=finalstate_external_dis(iii,:)
+         finalstate(iii)%vel=finalstate(iii)%mom(1:3)/finalstate(iii)%mom(0)
+         finalstate(iii)%charge=finalstate_external_dis_ch_ID(iii,1)
+         finalstate(iii)%ID=finalstate_external_dis_ch_ID(iii,0)
+         finalstate(iii)%pos=realParticles(i,j)%pos
+         finalstate(iii)%mass=mass_dis(iii)
+         end do
+         do iii=num_dis+1,20
+         finalstate(iii)%mom=(/0.,0.,0.,0./)
+         finalstate(iii)%vel=(/0.,0.,0./)
+         finalstate(iii)%charge=0
+         finalstate(iii)%ID=0
+         finalstate(iii)%pos=(/0.,0.,0./)
+         finalstate(iii)%mass=0.
+         end do
 
-           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         end if
 
 
             finalState%pert=(.not.realRun)
@@ -1689,7 +1807,6 @@ contains
             numberofsuccess(k)=numberofsuccess(k)+1
       !   stop
       !  write(*,*)eNeV(k), "eNeV(k)"
-      !  write(*,*)k, "k", fak1, "fak1"
       !   stop
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             write(14,*)size(pOutPart), "size(pOutPart)", size(finalstate), "size(finalstate)", sigma(k), fak1
@@ -1739,10 +1856,41 @@ contains
 
 
           ! calculate the finalstate offshellness
+       write(*,*)"finalstate", finalstate(1)%ID, finalstate(2)%ID, finalstate(0)%ID
 
           select case (k)
           case default ! ==== single-pi, DIS, 2p2h, two-pi-backg
+             finalstate%offshellPar=0.
+            !! added by pingal to check if update energies work on finalstate 
+            !! initialization
+              do iii=1,20
+               finalstate_test(i,iii)%mom=(/0.,0.,0.,0./)
+               finalstate_test(i,iii)%pos=(/0.,0.,0./)
+               finalstate_test(i,iii)%vel=(/0.,0.,0./)
+               finalstate_test(i,iii)%ID=0
+               finalstate_test(i,iii)%charge=0
+               finalstate_test(i,iii)%mass=0.0
+              end do 
+            !! end initialization
+            if ((k.eq.1).or.(k.eq.2).or.(k.eq.35)) then
+            finalstate_test(i,1)=finalstate(1)
+            finalstate_test(i,2)=finalstate(2)
+            call updateEnergies(finalstate_test) !! added by pingal
+            finalstate(1)%mom=finalstate_test(i,1)%mom !! update just energy information
+            finalstate(2)%mom=finalstate_test(i,2)%mom !! update just energy information
+            end if 
+            if (k.eq.34) then
+               do iii=1,num_dis
+                  finalstate_test(i,iii)=finalstate(iii)
+               end do
+               call updateEnergies(finalstate_test) !! 
+               do iii=1,num_dis
+                  finalstate(iii)%mom=finalstate_test(i,iii)%mom !! update just energy information
+               end do
+            end if   
+            !! added by pingal to check if update energies work on finalstate 
 
+            !! added by pingal to check if update energies work on finalstate 
              finalstate%offshellPar=0.
              call updateVelocity(finalstate)
 
