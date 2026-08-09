@@ -826,7 +826,7 @@ contains
     use particleDefinition
     use random, only: rn
     use idtable
-    use pauliBlockingModule, only: checkPauli
+    use pauliBlockingModule, only: checkPauli,checkPauli_pingal
     use neutrinoSigma
     use propagation, only: gradients,updateVelocity
     use collisionNumbering, only: pert_numbering,real_numbering
@@ -1205,9 +1205,12 @@ contains
       if (k_external.eq.1) then 
       whichReal_nucleon=0
       loopnucleon2: do j = lbound(realParticles,dim=2),ubound(realParticles,dim=2)
-         write(*,*) whichReal_nucleon, realParticles(i,j)%mom(1:3)           
+         write(*,*) whichReal_nucleon, realParticles(i,j)%mom(1:3)
+          realparticle_external%pos=realParticles(i,j)%pos      
           if ((realParticles(i,j)%charge==realparticle_external%charge).and. &
-            (dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3)).gt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))))then
+                  (.not.checkPauli_pingal(realparticle_external%mom,realParticles(i,j)%pos,realParticles(i,j)%charge,realParticles(i,j)%ID,.false.,realParticles)))then
+            !(dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3)).gt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))).and. & 
+            !(dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3))/2..lt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))))then
             test_for_pauli=realParticles
             test_for_pauli(i,j)%mom=realparticle_external%mom  
             test_for_pauli(i,j)%charge=realparticle_external%charge
@@ -1220,21 +1223,28 @@ contains
             finalstate_external_pauli(1)%ID= finalstate_external(1,1)%ID     
             finalstate_external_pauli(2)%ID= 0   !! this should be set as 0 other wise the pauli blocking would fail 
             finalstate_external_pauli(1)%mass= finalstate_external(1,1)%mass     
-            finalstate_external_pauli(2)%mass= finalstate_external(1,2)%mass                           
-            if (checkPauli(finalstate_external_pauli,test_for_pauli)) then 
+            finalstate_external_pauli(2)%mass= finalstate_external(1,2)%mass
+            finalstate_external_pauli(1)%perweight=1
+            finalstate_external_pauli(2)%perweight=0            
+            write(*,*)"22",(.not.checkPauli_pingal(realparticle_external%mom,realParticles(i,j)%pos,realParticles(i,j)%charge,realParticles(i,j)%ID,.false.,realParticles)),&
+                    (checkPauli_pingal(finalstate_external_pauli(1)%mom,finalstate_external_pauli(1)%pos,finalstate_external_pauli(1)%charge,finalstate_external_pauli(1)%ID,.false.,test_for_pauli))
+            if(checkPauli_pingal(finalstate_external_pauli(1)%mom,finalstate_external_pauli(1)%pos,finalstate_external_pauli(1)%charge,finalstate_external_pauli(1)%ID,.false.,test_for_pauli)) then 
               whichReal_nucleon=j  
-              cycle loopnucleon2
+              exit loopnucleon2
             else
              write(*,*)"Pauli Blocking failed"
             end if   
          end if 
-      end do  loopnucleon2  
+      end do  loopnucleon2
+    ! write(*,*) whichReal_nucleon
+    !stop 
       else if ((k_external.eq.2)) then
       whichReal_nucleon=0
       loopnucleon3: do j = lbound(realParticles,dim=2),ubound(realParticles,dim=2)
          write(*,*) whichReal_nucleon, realParticles(i,j)%mom(1:3)
          if ((realParticles(i,j)%charge==realparticle_external%charge).and. &
-            (dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3)).gt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))))then
+                 (.not.checkPauli_pingal(realparticle_external%mom,realParticles(i,j)%pos,realParticles(i,j)%charge,realParticles(i,j)%ID,.false.,realParticles)))then
+            !(dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3)).gt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))))then
             ! test_for_pauli=realParticles
             ! test_for_pauli(i,j)%mom=realparticle_external%mom  
             ! test_for_pauli(i,j)%charge=realparticle_external%charge
@@ -1246,7 +1256,7 @@ contains
             ! finalstate_external_pauli(2)%charge= finalstate_external(1,2)%charge            
          !    if (checkPauli(finalstate_external_pauli,test_for_pauli)) then 
               whichReal_nucleon=j  
-              cycle loopnucleon3
+              exit loopnucleon3
          !    else
          !     write(*,*)"Pauli Blocking failed"
          !    end if   
@@ -1257,7 +1267,8 @@ contains
       loopnucleon4: do j = lbound(realParticles,dim=2),ubound(realParticles,dim=2)
          write(*,*) whichReal_nucleon, realParticles(i,j)%mom(1:3)           
           if ((realParticles(i,j)%charge==realparticle_external%charge).and. &
-            (dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3)).gt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))))then
+            (.not.checkPauli_pingal(realparticle_external%mom,realParticles(i,j)%pos,realParticles(i,j)%charge,realParticles(i,j)%ID,.false.,realParticles)))then
+            !(dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3)).gt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))))then
             test_for_pauli=realParticles
             test_for_pauli(i,j)%mom=realparticle_external%mom  
             test_for_pauli(i,j)%charge=realparticle_external%charge
@@ -1271,9 +1282,11 @@ contains
             finalstate_external_pauli(2)%ID= finalstate_external(1,2)%ID  
             finalstate_external_pauli(1)%mass= finalstate_external(1,1)%mass     
             finalstate_external_pauli(2)%mass= finalstate_external(1,2)%mass                                  
+            finalstate_external_pauli(1)%perweight=1
+            finalstate_external_pauli(2)%perweight=1
             if (checkPauli(finalstate_external_pauli,test_for_pauli)) then 
               whichReal_nucleon=j  
-              cycle loopnucleon4
+              exit loopnucleon4
             else
              write(*,*)"Pauli Blocking failed"
             end if   
@@ -1285,7 +1298,8 @@ contains
       loopnucleon5: do j = lbound(realParticles,dim=2),ubound(realParticles,dim=2)
          write(*,*) whichReal_nucleon, realParticles(i,j)%mom(1:3)           
           if ((realParticles(i,j)%charge==realparticle_external%charge).and. &
-            (dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3)).gt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))))then
+            (.not.checkPauli_pingal(realparticle_external%mom,realParticles(i,j)%pos,realParticles(i,j)%charge,realParticles(i,j)%ID,.false.,realParticles)))then
+            !(dot_product(realParticles(i,j)%mom(1:3),realParticles(i,j)%mom(1:3)).gt.dot_product(realparticle_external%mom(1:3),realparticle_external%mom(1:3))))then
             dis_pauli_counter1=0
             dis_pauli_counter2=0
             test_for_pauli=realParticles
@@ -1303,7 +1317,9 @@ contains
                finalstate_external_pauli(2)%pos= realParticles(i,j)%pos     
                finalstate_external_pauli(2)%charge= 0.0     
                finalstate_external_pauli(2)%ID= 0    
-               finalstate_external_pauli(2)%mass= 0.0               
+               finalstate_external_pauli(2)%mass= 0.0
+               finalstate_external_pauli(1)%perweight=1
+               finalstate_external_pauli(2)%perweight=0               
                if (checkPauli(finalstate_external_pauli,test_for_pauli)) then 
                   ! whichReal_nucleon=j 
                   dis_pauli_counter2=dis_pauli_counter2+1 !! some condition to ensure all FS obey pauli blocking
@@ -1317,7 +1333,7 @@ contains
             !!#############################
            if (dis_pauli_counter1.eq.dis_pauli_counter2)then
                 whichReal_nucleon=j 
-               cycle loopnucleon5
+               exit loopnucleon5
             else
             write(*,*)"Pauli Blocking failed"
            end if
@@ -1872,13 +1888,24 @@ contains
                finalstate_test(i,iii)%mass=0.0
               end do 
             !! end initialization
-            if ((k.eq.1).or.(k.eq.2).or.(k.eq.35)) then
+            if ((k.eq.1).or.(k.eq.35)) then
             finalstate_test(i,1)=finalstate(1)
             finalstate_test(i,2)=finalstate(2)
             call updateEnergies(finalstate_test) !! added by pingal
             finalstate(1)%mom=finalstate_test(i,1)%mom !! update just energy information
             finalstate(2)%mom=finalstate_test(i,2)%mom !! update just energy information
+            finalstate(1)%mass=sqrt(finalstate(1)%mom(0)**2-Dot_Product(finalstate(1)%mom(1:3),finalstate(1)%mom(1:3)))
+            finalstate(2)%mass=sqrt(finalstate(2)%mom(0)**2-Dot_Product(finalstate(2)%mom(1:3),finalstate(2)%mom(1:3)))
             end if 
+            if (k.eq.2) then
+            finalstate_test(i,1)=finalstate(1)
+            finalstate_test(i,2)=finalstate(2)
+            call updateEnergies(finalstate_test) !! added by pingal
+            finalstate(1)%mom=finalstate_test(i,1)%mom !! update just energy information
+            finalstate(2)%mom=finalstate_test(i,2)%mom !! update just energy information
+            finalstate(1)%mass=sqrt(finalstate(1)%mom(0)**2-Dot_Product(finalstate(1)%mom(1:3),finalstate(1)%mom(1:3)))
+            finalstate(2)%mass=sqrt(finalstate(2)%mom(0)**2-Dot_Product(finalstate(2)%mom(1:3),finalstate(2)%mom(1:3)))
+            end if
             if (k.eq.34) then
                do iii=1,num_dis
                   finalstate_test(i,iii)=finalstate(iii)
@@ -1886,6 +1913,7 @@ contains
                call updateEnergies(finalstate_test) !! 
                do iii=1,num_dis
                   finalstate(iii)%mom=finalstate_test(i,iii)%mom !! update just energy information
+                  finalstate(iii)%mass=sqrt(finalstate(iii)%mom(0)**2-Dot_Product(finalstate(iii)%mom(1:3),finalstate(iii)%mom(1:3)))
                end do
             end if   
             !! added by pingal to check if update energies work on finalstate 
