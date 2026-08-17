@@ -605,7 +605,7 @@ contains
     type(particle), intent(in), dimension(:,:) :: realParticles
 
     integer :: i
-    logical:: checkPauili_pingal
+    logical:: checkPauli_pingal
 
     checkPauli_pingal=.true.
          
