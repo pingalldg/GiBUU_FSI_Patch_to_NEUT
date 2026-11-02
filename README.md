@@ -5,7 +5,7 @@
  
  Step 3 : follow https://gibuu.hepforge.org/trac/wiki/running for running the code.
  
- Step 4:  replace the code/init/initNeutrino.f90 with the version available in this repo: gibuu_fsi/.....
+ Step 4:  replace the code/init/initNeutrino.f90 and code/density/pauliBlocking.f90 with the version available in this repo: gibuu_fsi/.....
            (purpose is to modify initNeutrino.f90 so that it can read and initialize NEUT hard scattering events).
            
  Step 5 : recompile everything with the modified code, the new executable will be located inside the directory named 'testRun'.
