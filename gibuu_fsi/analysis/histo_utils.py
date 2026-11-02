@@ -1,5 +1,5 @@
 # histo_utils.py
-### This routine calculates the proton transparency for full gibuu simulated events
+# This routine calculates the proton transparency for full gibuu simulated events
 
 import uproot
 import numpy as np
