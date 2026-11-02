@@ -1,15 +1,11 @@
 import uproot
 import numpy as np
 import sys
-import os
 
-#file=uproot.open("/home/t2k/pingaldg/neut/NIWG_ehouarn.root")
-ROOT_FILE= os.environ.get("INPUTROOT","/gpfs/group/t2k/beam/work/pingaldg/backup_release3/release/output_wpotential_wcoll_offshell_ccqe_plus_res_ehouarn/NIWG_ehouarn_inclusive5.root")
-print(f"Loading {ROOT_FILE} ...", flush=True)
 
-_file = uproot.open(ROOT_FILE)
+file=uproot.open("/home/t2k/pingaldg/neut/NIWG_ccqe_res_2p2h_DIS.root")
 
-tree = _file['NIWGTree']
+tree = file['NIWGTree']
 
 nu_index = tree['NIWGEvent/nu_index'].array()
 isnuc_index = tree['NIWGEvent/isnuc_index'].array()

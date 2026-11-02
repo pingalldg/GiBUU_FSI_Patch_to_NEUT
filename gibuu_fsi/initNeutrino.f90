@@ -994,7 +994,13 @@ contains
 
     ! set the overall kinematics (most of it as dummy):
     call eNev_SetProcess(eNev0, process_ID,flavor_ID)
+
+!! Sorry, need to clean up the entire code, for now I explain what has been done below ...
+
 !! the following are initialized to assert some default values
+!! but they are not used directly anywhere, certain attributes are replaced with read values from 
+!! input_values.f90 and then they were further used to replace the variable attributes used in actual simulation.
+
    realparticle_external= particle( (/-1.7960259607726432, -1.6428854456019446, -1.9433965112080396/), &
                 (/0.93878582864054227, 0.024622358534151623, -0.0089833073069659208, 0.028069052466266970/), &
                 (/0.026227875739896305, -0.0095690698128952922, 0.029899313634409085/), &
